@@ -1,0 +1,94 @@
+오픈소스 라이브러리인 OpenCV와 함께 감지 시스템을 구축할 수 있습니다. 이 프로젝트는 복잡하기 때문에 전체 코드를 다 작성하는 것이 아니고, 주요 기능과 구조를 설명하는 방식으로 제공할게요.
+
+특히, 포즈 추정을 위해 유명한 라이브러리인 `MediaPipe`를 사용할 수 있습니다. 이것을 사용하면 손의 포즈를 추적할 수 있어서 실제 포즈를 게임 동작에 반영할 수 있습니다.
+
+여기서는 두 명의 플레이어가 손을 지면 캐릭터가 '펀치' 동작을 수행하는 간단한 예제를 제공하겠습니다. 
+
+### 설치가 필요한 라이브러리
+* `opencv-python`: 영상 처리를 위해 필요합니다.
+* `mediapipe`: 손의 포즈 추정을 위해 필요합니다.
+
+```sh
+pip install opencv-python mediapipe
+```
+
+### 주요 단계
+1. 비디오 스트림 캡처 설정
+2. 손을 추적하여 포즈 인식
+3. 게임 상태 업데이트 및 캐릭터 동작 반영
+4. 화면 갱신 및 사용자 인터페이스 관리
+
+```python
+import cv2
+import mediapipe as mp
+
+# MediaPipe 손 인식 모델
+mp_hands = mp.solutions.hands
+mp_drawing = mp.solutions.drawing_utils
+
+# 체력 게이지 초기 설정
+player1_hp = 100
+player2_hp = 100
+
+# 비디오 캡처 객체 생성
+cap = cv2.VideoCapture(0)
+
+# 손 인식 모델 초기화
+with mp_hands.Hands(max_num_hands=2, min_detection_confidence=0.7) as hands:
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        # 이미지를 RGB로 변환
+        image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        image.flags.writeable = False
+
+        # MediaPipe에서 손을 인식
+        results = hands.process(image)
+
+        # 이미지를 다시 BGR로 변환
+        image.flags.writeable = True
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+
+        # 인식된 손 랜드마크가 존재하면
+        if results.multi_hand_landmarks:
+            for hand_landmarks in results.multi_hand_landmarks:
+                # 랜드마크를 그리기
+                mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+                
+                # 주먹 쥐기 감지
+                fist_closed = False
+                if hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].y < hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_MCP].y and \
+                   hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y < hand_landmarks.landmark[mp_hands.HandLandmark.WRIST].y:
+                    fist_closed = True
+
+                if fist_closed:
+                    # 홀로그램 좌표를 얻고, 왼쪽과 오른쪽을 구분하여 체력 감소 등의 로직 적용
+                    if hand_landmarks.landmark[mp_hands.HandLandmark.WRIST].x < 0.5:  # 화면의 왼쪽
+                        player2_hp -= 10
+                    else:  # 화면의 오른쪽
+                        player1_hp -= 10
+
+        # 게임 상태를 출력
+        cv2.putText(image, f'Player 1 HP: {player1_hp}', (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+        cv2.putText(image, f'Player 2 HP: {player2_hp}', (400, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+
+        # 화면에 이미지 출력
+        cv2.imshow('Game', image)
+
+        # 'q' 키를 누르면 루프 탈출
+        if cv2.waitKey(5) & 0xFF == ord('q'):
+            break
+
+# 자원 해제
+cap.release()
+cv2.destroyAllWindows()
+```
+
+### 코드 설명
+1. **손 인식 모델 설정**: `mediapipe`의 손 인식 모델을 사용해 비디오 스트림에서 손을 인식합니다.
+2. **체력 게이지 초기화**: 두 플레이어의 체력은 100으로 시작합니다.
+3. **비디오 프레임 처리**: 비디오 캡처 객체로부터 프레임을 읽어서 손의 랜드마크를 찾고, 주먹이 쥐어졌는지를 판단합니다.
+4. **체력 업데이트**: 주먹이 쥐어진 상태로 판단되면 상대 플레이어의 체력을 감소시킵니다.
+5. **게임 상태 출력**: 두 플레이어의 체력을 화면에 출력하고 'q' 키를 누르면 게임을 종료합니다.

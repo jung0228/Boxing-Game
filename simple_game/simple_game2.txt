@@ -1,0 +1,111 @@
+파이썬으로 간단한 그래픽 기반의 게임을 만들기 위해서는 `pygame` 라이브러리를 사용할 수 있습니다. `pygame`은 파이썬으로 게임을 개발하기 위한 강력한 도구로, 다양한 그래픽 및 오디오 기능을 제공합니다. 
+
+아래는 두 스틱맨이 복싱을 하는 간단한 게임 예시입니다. 스틱맨은 움직이지 않으며, 스트레이트 공격과 방어를 할 수 있습니다. 플레이어의 입력에 따라 스틱맨의 동작이 변경되고, 공격이 성공하면 상대의 체력이 감소합니다.
+
+먼저 `pygame` 라이브러리를 설치해야 합니다. 터미널에서 아래 명령어를 사용하세요:
+```
+pip install pygame
+```
+
+다음은 게임의 전체 코드입니다:
+
+```python
+import pygame
+import sys
+
+# 기본 설정
+pygame.init()
+screen = pygame.display.set_mode((800, 600))
+pygame.display.set_caption("Stickman Boxing")
+
+# 색상 설정
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+
+# 기본 폰트 설정
+font = pygame.font.Font(None, 36)
+
+# 스틱맨 클래스 정의
+class Stickman:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.health = 100
+        self.stance = "idle"  # idle, attack, defend
+
+    def draw(self, screen):
+        if self.stance == "idle":
+            pygame.draw.circle(screen, BLACK, (self.x, self.y), 20)
+            pygame.draw.line(screen, BLACK, (self.x, self.y + 20), (self.x, self.y + 100), 5)
+            pygame.draw.line(screen, BLACK, (self.x - 20, self.y + 40), (self.x + 20, self.y + 40), 5)
+            pygame.draw.line(screen, BLACK, (self.x, self.y + 100), (self.x - 20, self.y + 150), 5)
+            pygame.draw.line(screen, BLACK, (self.x, self.y + 100), (self.x + 20, self.y + 150), 5)
+        elif self.stance == "attack":
+            pygame.draw.circle(screen, BLACK, (self.x, self.y), 20)
+            pygame.draw.line(screen, BLACK, (self.x, self.y + 20), (self.x, self.y + 100), 5)
+            pygame.draw.line(screen, BLACK, (self.x - 20, self.y + 40), (self.x + 50, self.y + 40), 5)
+            pygame.draw.line(screen, BLACK, (self.x, self.y + 100), (self.x - 20, self.y + 150), 5)
+            pygame.draw.line(screen, BLACK, (self.x, self.y + 100), (self.x + 20, self.y + 150), 5)
+        elif self.stance == "defend":
+            pygame.draw.circle(screen, GREEN, (self.x, self.y), 20)
+            pygame.draw.line(screen, BLACK, (self.x, self.y + 20), (self.x, self.y + 100), 5)
+            pygame.draw.line(screen, BLACK, (self.x - 20, self.y + 40), (self.x + 20, self.y + 40), 5)
+            pygame.draw.line(screen, BLACK, (self.x - 20, self.y + 40), (self.x - 20, self.y + 80), 5)
+            pygame.draw.line(screen, BLACK, (self.x + 20, self.y + 40), (self.x + 20, self.y + 80), 5)
+            pygame.draw.line(screen, BLACK, (self.x, self.y + 100), (self.x - 20, self.y + 150), 5)
+            pygame.draw.line(screen, BLACK, (self.x, self.y + 100), (self.x + 20, self.y + 150), 5)
+
+# 게임 루프
+player1 = Stickman(200, 300)
+player2 = Stickman(600, 300)
+
+clock = pygame.time.Clock()
+
+while True:
+    screen.fill(WHITE)
+    
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+    
+    keys = pygame.key.get_pressed()
+
+    # 플레이어1 조작
+    if keys[pygame.K_a]:
+        player1.stance = "attack"
+        if player2.stance != "defend":
+            player2.health -= 10
+    elif keys[pygame.K_s]:
+        player1.stance = "defend"
+    else:
+        player1.stance = "idle"
+
+    # 플레이어2 조작
+    if keys[pygame.K_LEFT]:
+        player2.stance = "attack"
+        if player1.stance != "defend":
+            player1.health -= 10
+    elif keys[pygame.K_DOWN]:
+        player2.stance = "defend"
+    else:
+        player2.stance = "idle"
+    
+    player1.draw(screen)
+    player2.draw(screen)
+
+    # 체력 표시
+    health_text1 = font.render(f"Player 1 Health: {player1.health}", True, BLACK)
+    health_text2 = font.render(f"Player 2 Health: {player2.health}", True, BLACK)
+    screen.blit(health_text1, (50, 50))
+    screen.blit(health_text2, (500, 50))
+    
+    pygame.display.flip()
+    clock.tick(30)
+```
+
+이 코드는 기본적인 스틱맨 복싱 게임을 나타냅니다. 두 플레이어는 각각 'A' 키와 '왼쪽 방향키'로 공격할 수 있으며, 'S' 키와 '아래 방향키'로 방어할 수 있습니다. 상대방이 방어 중일 때 공격하면 공격이 무효가 되고, 공격이 성공하면 상대방의 체력이 감소합니다. 
+
+코드를 실행하여 두 스틱맨이 복싱하는 모습을 확인해 보세요!

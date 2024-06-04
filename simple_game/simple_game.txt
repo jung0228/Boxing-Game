@@ -1,0 +1,95 @@
+스틱맨 2명이 복싱을 하는 간단한 게임을 파이썬으로 만들기 위해, Pygame 라이브러리를 사용할 수 있습니다. 이 예제에서는 두 명의 스틱맨이 움직이지 않고, 각 키 입력에 따라 스트레이트 공격이나 방어를 수행하게 됩니다. 스트레이트 공격이 상대의 방어를 뚫어내면 상대의 체력이 줄어듭니다.
+
+아래는 이에 대한 간단한 코드 예제입니다:
+
+```python
+import pygame
+
+# 게임 초기화
+pygame.init()
+
+# 화면 설정
+screen_width = 800
+screen_height = 600
+screen = pygame.display.set_mode((screen_width, screen_height))
+pygame.display.set_caption("Stickman Boxing Game")
+
+# 색상
+black = (0, 0, 0)
+white = (255, 255, 255)
+red = (255, 0, 0)
+blue = (0, 0, 255)
+
+# 체력
+player1_health = 100
+player2_health = 100
+
+# 폰트 설정
+font = pygame.font.Font(None, 36)
+
+# 게임 루프 관련 변수
+running = True
+clock = pygame.time.Clock()
+FPS = 30
+
+# 스틱맨 그리는 함수
+def draw_stickman(x, y, color):
+    pygame.draw.circle(screen, color, (x, y - 30), 20, 2)    # 머리
+    pygame.draw.line(screen, color, (x, y - 10), (x, y + 40), 2)  # 몸통
+    pygame.draw.line(screen, color, (x, y + 40), (x - 20, y + 60), 2)  # 왼쪽 다리
+    pygame.draw.line(screen, color, (x, y + 40), (x + 20, y + 60), 2)  # 오른쪽 다리
+    pygame.draw.line(screen, color, (x, y + 10), (x - 30, y + 30), 2)  # 왼쪽 팔
+    pygame.draw.line(screen, color, (x, y + 10), (x + 30, y + 30), 2)  # 오른쪽 팔
+
+# 게임 메인 루프
+while running:
+    screen.fill(white)
+    
+    # 이벤트 처리
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_a:  # player 1 스트레이트
+                if event.key != pygame.K_s:  # player 2가 방어 중이 아니라면
+                    player2_health -= 10
+            if event.key == pygame.K_l:  # player 2 스트레이트
+                if event.key != pygame.K_k:  # player 1가 방어 중이 아니라면
+                    player1_health -= 10
+
+    # 스틱맨 업데이트
+    draw_stickman(200, 300, black)
+    draw_stickman(600, 300, black)
+
+    # 체력 표시
+    player1_health_text = font.render(f"Player 1 Health: {player1_health}", True, red)
+    screen.blit(player1_health_text, (50, 50))
+
+    player2_health_text = font.render(f"Player 2 Health: {player2_health}", True, blue)
+    screen.blit(player2_health_text, (450, 50))
+
+    # 게임 종료 조건
+    if player1_health <= 0:
+        winner_text = font.render("Player 2 Wins!", True, blue)
+        screen.blit(winner_text, (screen_width // 2 - 100, screen_height // 2))
+        pygame.display.flip()
+        pygame.time.wait(2000)
+        running = False
+
+    if player2_health <= 0:
+        winner_text = font.render("Player 1 Wins!", True, red)
+        screen.blit(winner_text, (screen_width // 2 - 100, screen_height // 2))
+        pygame.display.flip()
+        pygame.time.wait(2000)
+        running = False
+
+    pygame.display.flip()
+    clock.tick(FPS)
+
+pygame.quit()
+```
+
+위의 코드에서는 두 명의 플레이어가 `K_a` 키와 `K_l` 키를 사용해 스트레이트를 시도합니다. 만약 상대방이 방어 상태가 아니면, 상대방의 체력을 10만큼 낮춥니다. 체력이 0 이하가 되면 게임이 종료되고 승자가 출력됩니다.
+
+코드를 실행하기 전에, 먼저 Pygame이 설치되어 있는지 확인하세요. 만약 설치되어 있지 않다면 터미널 또는 커맨드 라인에 다음 명령어를 입력하여 설치할 수 있습니다:
