@@ -15,6 +15,10 @@ max_health = 50
 # 비디오 캡처 초기화 (웹캠)
 cap = cv2.VideoCapture(0)
 
+# 이미지 로드 및 크기 조정
+overlay_image = cv2.imread('overlay.png')  # 'overlay.png'를 원하는 이미지 파일로 교체
+overlay_image = cv2.resize(overlay_image, (200, 200))
+
 def draw_lightsaber(image, wrist, thumb, color=(0, 255, 0)):
     # Calculate the direction from wrist to thumb
     direction = (thumb[0] - wrist[0], thumb[1] - wrist[1])
@@ -24,10 +28,6 @@ def draw_lightsaber(image, wrist, thumb, color=(0, 255, 0)):
     # Draw the lightsaber handle
     cv2.line(image, wrist, end_point, color, 20)
   
-    # Add glow effect
-    for i in range(1, 6):
-        cv2.line(image, wrist, end_point, (color[0], int(color[1]*0.6), int(color[2]*0.6)), 20 - i*3)
-    
     return end_point
 
 def point_to_line_distance(point, line_start, line_end):
@@ -61,10 +61,35 @@ def draw_health_bar(image, health, max_health, position, size=(300, 20), color=(
     # Draw border
     cv2.rectangle(image, (x, y), (x + w, y + h), (255, 255, 255), 2)
 
+def overlay_image_on_hand(image, overlay_img, wrist_pos):
+    overlay_height, overlay_width = overlay_img.shape[:2]
+    top_left = (int(wrist_pos[0] - overlay_width / 2), int(wrist_pos[1] - overlay_height))  # 이미지를 위로 올립니다.
+
+    # Ensure the overlay fits within the main image
+    if top_left[0] < 0 or top_left[1] < 0 or top_left[0] + overlay_width > image.shape[1] or top_left[1] + overlay_height > image.shape[0]:
+        return  # Skip overlay if it doesn't fit
+
+    # Create a mask of the overlay image and its inverse mask
+    gray_overlay = cv2.cvtColor(overlay_img, cv2.COLOR_BGR2GRAY)
+    _, mask = cv2.threshold(gray_overlay, 1, 255, cv2.THRESH_BINARY)
+    mask_inv = cv2.bitwise_not(mask)
+
+    # Region of interest (ROI) in the main image
+    roi = image[top_left[1]:top_left[1] + overlay_height, top_left[0]:top_left[0] + overlay_width]
+
+    # Black-out the area of the overlay in the ROI
+    img1_bg = cv2.bitwise_and(roi, roi, mask=mask_inv)
+
+    # Take only region of overlay image.
+    img2_fg = cv2.bitwise_and(overlay_img, overlay_img, mask=mask)
+
+    # Put overlay in ROI and modify the main image
+    dst = cv2.add(img1_bg, img2_fg)
+    image[top_left[1]:top_left[1] + overlay_height, top_left[0]:top_left[0] + overlay_width] = dst
+
+
 game_over = False
 winner = ""
-
-
 
 while cap.isOpened() and not game_over:
     success, image = cap.read()
@@ -127,6 +152,9 @@ while cap.isOpened() and not game_over:
 
             # 손 랜드마크 그리기
             mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+
+            # 손 위에 이미지 오버레이
+            overlay_image_on_hand(image, overlay_image, wrist_pos)
 
     # 충돌 감지 및 체력 감소
     if player1_lightsaber_end and player2_wrist and player2_thumb:
