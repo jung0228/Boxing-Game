@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이미지 아웃라인 색상 채우기</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input[type="file"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .image-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .image-container .step {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .image-container img {
+            max-width: 500px;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .loader {
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>이미지 아웃라인 색상 채우기</h1>
+    <form id="upload-form" enctype="multipart/form-data">
+        <input type="file" id="image-input" name="image" accept="image/*" required>
+        <button type="submit">이미지 업로드</button>
+    </form>
+    <div id="loader" class="loader">이미지 처리 중...</div>
+    <div id="result" class="image-container">
+        <h2>이미지가 업로드되면 여기에 추가될 것입니다</h2>
+    </div>
+
+    <script>
+        document.getElementById('upload-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            document.getElementById('loader').style.display = 'block';
+            const formData = new FormData();
+            const imageFile = document.getElementById('image-input').files[0];
+            formData.append('image', imageFile);
+
+            try {
+                const responses = await Promise.all([
+                    fetch('/upload', { method: 'POST', body: formData }),
+                    fetch('/upload-gray', { method: 'POST', body: formData }),
+                    fetch('/upload-inverted', { method: 'POST', body: formData })
+                ]);
+
+                if (responses.every(response => response.ok)) {
+                    const blobs = await Promise.all(responses.map(response => response.blob()));
+                    const imgDiv = document.getElementById('result');
+                    imgDiv.innerHTML = '';
+
+                    const steps = ["Step 1", "Step 2", "Step 3"];
+                    blobs.forEach((blob, index) => {
+                        const stepDiv = document.createElement('div');
+                        stepDiv.className = 'step';
+
+                        const stepText = document.createElement('p');
+                        stepText.textContent = steps[index];
+                        stepDiv.appendChild(stepText);
+
+                        const img = document.createElement('img');
+                        img.src = URL.createObjectURL(blob);
+                        img.alt = `Processed Image ${index + 1}`;
+                        stepDiv.appendChild(img);
+
+                        imgDiv.appendChild(stepDiv);
+                    });
+
+                    document.getElementById('loader').style.display = 'none';
+                } else {
+                    throw new Error('하나 이상의 이미지 처리 실패.');
+                }
+            } catch (error) {
+                document.getElementById('loader').style.display = 'none';
+                alert('이미지 처리 실패: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>
