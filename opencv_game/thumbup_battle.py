@@ -2,7 +2,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 
-# Mediapipe 손 모델 초기화
+# Mediapipe 손 모델 초기화!!!
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(max_num_hands=2, min_detection_confidence=0.7, min_tracking_confidence=0.5)
 mp_drawing = mp.solutions.drawing_utils
