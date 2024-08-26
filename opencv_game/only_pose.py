@@ -2,7 +2,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 
-# MediaPipe 포즈 추적 모델 초기화
+# MediaPipe 포즈 추적 모델 초기화!!!
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
 pose = mp_pose.Pose()
