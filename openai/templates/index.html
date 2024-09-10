@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with GPT</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        #recognizedText, #response {
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 16px;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button.waiting {
+            background-color: #ff9800; /* 대기 중일 때 버튼 색상 변경 */
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            button {
+                font-size: 14px;
+                padding: 10px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Talk to ChatGPT by Hyeonwoo</h1>
+        <button id="conversationButton" onclick="startConversation()">Start Conversation</button>
+        <p id="recognizedText">Your recognized speech will appear here...</p>
+        <p id="response">ChatGPT response will appear here...</p>
+    </div>
+
+    <script>
+        function startConversation() {
+            // 버튼을 비활성화하고 텍스트 변경 및 색상 변경
+            const button = document.getElementById('conversationButton');
+            button.innerText = "Waiting...";
+            button.classList.add('waiting');
+            button.disabled = true;
+
+            // 로딩 중 메시지 표시 (음성 인식 준비)
+            document.getElementById('recognizedText').innerText = "Listening for speech...";
+            document.getElementById('response').innerText = "";
+
+            // 서버에 요청 보내기 (음성 인식)
+            fetch('/process', {
+                method: 'POST',
+            }).then(response => response.json())
+              .then(data => {
+                  // 음성 인식 결과를 먼저 HTML에 표시
+                  document.getElementById('recognizedText').innerText = "Recognized: " + data.recognized;
+                  
+                  // ChatGPT 응답 대기 중에 버튼 텍스트 유지
+                  document.getElementById('response').innerText = "Waiting for ChatGPT response...";
+
+                  // ChatGPT 응답을 HTML에 표시
+                  setTimeout(() => {
+                      const chatgptResponse = data.response;
+                      document.getElementById('response').innerText = chatgptResponse;
+
+                      // 음성으로 응답 읽어주기
+                      speakText(chatgptResponse);
+
+                      // 버튼을 다시 활성화하고 원래 상태로 복원
+                      button.innerText = "Start Conversation";
+                      button.classList.remove('waiting');
+                      button.disabled = false;
+                  }, 1000); // ChatGPT 응답 표시를 1초 딜레이
+              })
+              .catch(error => {
+                  document.getElementById('recognizedText').innerText = "Error during speech recognition.";
+                  document.getElementById('response').innerText = "Error during ChatGPT response.";
+
+                  // 버튼을 다시 활성화하고 원래 상태로 복원
+                  button.innerText = "Start Conversation";
+                  button.classList.remove('waiting');
+                  button.disabled = false;
+              });
+        }
+
+        function speakText(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US'; // 언어 설정 (필요시 변경 가능)
+            window.speechSynthesis.speak(utterance);
+        }
+    </script>
+</body>
+</html>
