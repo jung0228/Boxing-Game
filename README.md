@@ -9,3 +9,5 @@ It is just simple game using camera.
 <img width="425" alt="스크린샷 2024-07-10 오후 4 25 03" src="https://github.com/user-attachments/assets/ccc2800b-8f95-4d31-9c40-92f8cb98b311">
 
 ## project3: speech with ChatGPT
+https://github.com/user-attachments/assets/9edafeff-829b-47a3-9cd9-f903a83a2ad2
+
